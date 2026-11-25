@@ -159,6 +159,36 @@ export default function CentersManagement() {
     }
   };
 
+  const handleEditZone = (zone) => {
+    setEditingZone(zone);
+    setZoneForm({ name: zone.name, code: zone.code });
+    setIsZoneModalOpen(true);
+  };
+
+  const handleDeleteZone = async (zone, force = false) => {
+    if (!force && !confirm(`Are you sure you want to delete zone "${zone.name}" (${zone.code})?`)) {
+      return;
+    }
+
+    try {
+      const url = force ? `/admin/zones/${zone.id}?force=true` : `/admin/zones/${zone.id}`;
+      const res = await api.delete(url);
+      if (res.data.success) {
+        alert(res.data.message || 'Zone deleted successfully.');
+        fetchZones();
+      }
+    } catch (err) {
+      if (err.response?.data?.has_centers) {
+        if (confirm(`${err.response.data.message}\n\nDo you want to FORCE DELETE this zone along with its ${err.response.data.centers_count} examination center(s)?`)) {
+          handleDeleteZone(zone, true);
+          return;
+        }
+      } else {
+        alert(err.response?.data?.message || 'Error deleting zone.');
+      }
+    }
+  };
+
   // Room Handlers
   const handleOpenRooms = async (center) => {
     setActiveCenterForRooms(center);
@@ -352,13 +382,14 @@ export default function CentersManagement() {
         </div>
       ) : (
         /* Zones Table */
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden max-w-2xl">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden max-w-3xl">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
                 <th className="py-3 px-4">Zone Name</th>
                 <th className="py-3 px-4">Zone Code</th>
                 <th className="py-3 px-4">Centers Count</th>
+                <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
@@ -367,6 +398,24 @@ export default function CentersManagement() {
                   <td className="py-3 px-4 font-bold text-slate-900">{zone.name}</td>
                   <td className="py-3 px-4 font-mono font-bold text-blue-600">{zone.code}</td>
                   <td className="py-3 px-4">{zone.centers_count || 0} Test Centers</td>
+                  <td className="py-3 px-4 text-right">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <button
+                        onClick={() => handleEditZone(zone)}
+                        className="p-1.5 hover:bg-slate-100 text-slate-600 rounded-lg transition-colors cursor-pointer"
+                        title="Edit Zone"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteZone(zone)}
+                        className="p-1.5 hover:bg-rose-50 text-rose-600 rounded-lg transition-colors cursor-pointer"
+                        title="Delete Zone"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -514,11 +563,11 @@ export default function CentersManagement() {
         </form>
       </Modal>
 
-      {/* Add Zone Modal */}
+      {/* Add / Edit Zone Modal */}
       <Modal
         isOpen={isZoneModalOpen}
         onClose={() => setIsZoneModalOpen(false)}
-        title="Add Administrative Zone"
+        title={editingZone ? 'Edit Administrative Zone' : 'Add Administrative Zone'}
       >
         <form onSubmit={handleSaveZone} className="space-y-4">
           <div>
@@ -553,15 +602,15 @@ export default function CentersManagement() {
             <button
               type="button"
               onClick={() => setIsZoneModalOpen(false)}
-              className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-xs font-semibold"
+              className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider"
+              className="px-5 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-blue-700"
             >
-              Save Zone
+              {editingZone ? 'Update Zone' : 'Save Zone'}
             </button>
           </div>
         </form>

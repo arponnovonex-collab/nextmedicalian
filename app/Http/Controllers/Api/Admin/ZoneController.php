@@ -53,22 +53,37 @@ class ZoneController extends Controller
         ]);
     }
 
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
         $zone = Zone::findOrFail($id);
 
         if ($zone->centers()->exists()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cannot delete zone because it contains active examination centers.',
-            ], 422);
+            if ($request->boolean('force')) {
+                foreach ($zone->centers as $center) {
+                    if ($center->registrations()->exists()) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Cannot delete zone: Center '{$center->name}' already has registered examination candidates.",
+                        ], 422);
+                    }
+                    $center->rooms()->delete();
+                    $center->delete();
+                }
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Cannot delete zone '{$zone->name}' because it contains {$zone->centers()->count()} examination center(s).",
+                    'has_centers' => true,
+                    'centers_count' => $zone->centers()->count(),
+                ], 422);
+            }
         }
 
         $zone->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'Zone deleted successfully',
+            'message' => "Zone '{$zone->name}' deleted successfully.",
         ]);
     }
 }
