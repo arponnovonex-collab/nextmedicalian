@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../api/axios';
+import api, { downloadFile } from '../../api/axios';
 import {
   UploadCloud,
   FileSpreadsheet,
@@ -57,8 +57,24 @@ export default function StudentImportWorkflow() {
     } catch (e) {}
   };
 
-  const handleDownloadTemplate = () => {
-    window.open('/api/admin/students/import/template', '_blank');
+  const handleDownloadTemplate = async () => {
+    try {
+      await downloadFile('/admin/students/import/template', 'student_import_template.csv');
+    } catch (e) {
+      // Instant Client-side Fallback
+      const csv = "Student Name,Phone Number,Email,Institution,HSC Batch,Gender,Address,Center Code,Room Number,Seat Number,Guardian Phone\n" +
+        "Anika Tabassum,01712345678,anika@example.com,Viqarunnisa Noon College,HSC-2026,female,\"Dhanmondi, Dhaka\",DHK-01,Room 101,A-12,01700112233\n" +
+        "Tanvir Hasan,01812345678,tanvir@example.com,Notre Dame College,HSC-2026,male,\"Mirpur, Dhaka\",DHK-02,Auditorium A,B-05,01800112233";
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'student_import_template.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    }
   };
 
   const handleFileChange = (e) => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../api/axios';
+import api, { downloadFile } from '../../api/axios';
 import {
   Download,
   CalendarCheck,
@@ -65,12 +65,12 @@ export default function StudentDashboard() {
 
   const handleDownloadAdmit = () => {
     if (!currentExam) return;
-    window.open(`/api/student/exams/${currentExam.exam_id}/admit-card`, '_blank');
+    downloadFile(`/student/exams/${currentExam.exam_id}/admit-card`, `admit_card_${currentExam.exam_code}.pdf`);
   };
 
   const handleDownloadResultPdf = () => {
     if (!currentExam) return;
-    window.open(`/api/student/exams/${currentExam.exam_id}/result-pdf`, '_blank');
+    downloadFile(`/student/exams/${currentExam.exam_id}/result-pdf`, `result_${currentExam.exam_code}.pdf`);
   };
 
   if (loading) {

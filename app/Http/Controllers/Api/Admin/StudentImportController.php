@@ -15,10 +15,10 @@ class StudentImportController extends Controller
         protected StudentImportService $importService
     ) {}
 
-    public function template(): StreamedResponse
+    public function template(): \Illuminate\Http\Response
     {
         $headers = [
-            'Content-Type' => 'text/csv',
+            'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="student_import_template.csv"',
         ];
 
@@ -65,14 +65,16 @@ class StudentImportController extends Controller
             ],
         ];
 
-        return response()->stream(function () use ($columns, $sampleRows) {
-            $handle = fopen('php://output', 'w');
-            fputcsv($handle, $columns);
-            foreach ($sampleRows as $row) {
-                fputcsv($handle, $row);
-            }
-            fclose($handle);
-        }, 200, $headers);
+        $output = fopen('php://temp', 'r+');
+        fputcsv($output, $columns);
+        foreach ($sampleRows as $row) {
+            fputcsv($output, $row);
+        }
+        rewind($output);
+        $csv = stream_get_contents($output);
+        fclose($output);
+
+        return response($csv, 200, $headers);
     }
 
     public function preview(Request $request): JsonResponse

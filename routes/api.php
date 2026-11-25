@@ -29,6 +29,7 @@ Route::prefix('auth')->group(function () {
 Route::prefix('public')->group(function () {
     Route::get('/verify/admit/{token}', [PublicVerificationController::class, 'verifyAdmitCard']);
     Route::get('/verify/result/{token}', [PublicVerificationController::class, 'verifyResult']);
+    Route::get('/template/student-import.csv', [StudentImportController::class, 'template']);
 });
 
 /*

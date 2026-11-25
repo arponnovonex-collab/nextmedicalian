@@ -144,4 +144,11 @@ class StudentRegistrationAndReuseTest extends TestCase
             ->postJson('/api/admin/students', $payload);
         $res2->assertStatus(422);
     }
+
+    public function test_can_download_csv_template(): void
+    {
+        $response = $this->get('/api/public/template/student-import.csv');
+        $response->assertStatus(200);
+        $this->assertStringContainsString('text/csv', $response->headers->get('content-type'));
+    }
 }

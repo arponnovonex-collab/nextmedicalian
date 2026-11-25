@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../api/axios';
+import api, { downloadFile } from '../../api/axios';
 import {
   FileSpreadsheet,
   Download,
@@ -38,19 +38,19 @@ export default function Reports() {
   };
 
   const handleDownloadAttendance = () => {
-    let url = `/api/admin/reports/attendance?exam_id=${selectedExamId}`;
+    let url = `/admin/reports/attendance?exam_id=${selectedExamId}`;
     if (selectedCenterId) url += `&center_id=${selectedCenterId}`;
-    window.open(url, '_blank');
+    downloadFile(url, `attendance_sheet_exam_${selectedExamId}.pdf`);
   };
 
   const handleDownloadSeatPlan = () => {
-    let url = `/api/admin/reports/seat-plan?exam_id=${selectedExamId}`;
+    let url = `/admin/reports/seat-plan?exam_id=${selectedExamId}`;
     if (selectedCenterId) url += `&center_id=${selectedCenterId}`;
-    window.open(url, '_blank');
+    downloadFile(url, `seat_plan_exam_${selectedExamId}.pdf`);
   };
 
   const handleDownloadEvaluatorsReport = () => {
-    window.open(`/api/admin/reports/evaluators?exam_id=${selectedExamId}`, '_blank');
+    downloadFile(`/admin/reports/evaluators?exam_id=${selectedExamId}`, `evaluators_report_exam_${selectedExamId}.pdf`);
   };
 
   return (

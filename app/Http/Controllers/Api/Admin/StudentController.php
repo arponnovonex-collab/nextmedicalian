@@ -153,6 +153,7 @@ class StudentController extends Controller
                 ->first();
 
             if ($existing) {
+                DB::rollBack();
                 return response()->json([
                     'success' => false,
                     'message' => 'Student is already registered for this examination.',

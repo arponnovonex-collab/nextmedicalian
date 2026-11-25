@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../api/axios';
+import api, { downloadFile } from '../../api/axios';
 import {
   Award,
   AlertTriangle,
@@ -95,7 +95,7 @@ export default function ResultPublishing() {
   };
 
   const handleExportMeritList = () => {
-    window.open(`/api/admin/results/export?exam_id=${selectedExamId}`, '_blank');
+    downloadFile(`/admin/results/export?exam_id=${selectedExamId}`, `merit_list_exam_${selectedExamId}.csv`);
   };
 
   const s = previewData?.summary || {};

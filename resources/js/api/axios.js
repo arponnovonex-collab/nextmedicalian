@@ -34,4 +34,35 @@ api.interceptors.response.use(
   }
 );
 
+export const downloadFile = async (url, defaultFilename) => {
+  try {
+    const response = await api.get(url, {
+      responseType: 'blob',
+    });
+    
+    let filename = defaultFilename;
+    const disposition = response.headers['content-disposition'];
+    if (disposition && disposition.indexOf('filename=') !== -1) {
+      const match = disposition.match(/filename="?([^"]+)"?/);
+      if (match && match[1]) filename = match[1];
+    }
+
+    const blob = new Blob([response.data], { 
+      type: response.headers['content-type'] || 'application/octet-stream' 
+    });
+    const blobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+    return true;
+  } catch (err) {
+    console.error('Download failed:', err);
+    throw err;
+  }
+};
+
 export default api;

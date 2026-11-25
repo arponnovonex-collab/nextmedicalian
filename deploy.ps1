@@ -2,12 +2,6 @@
 # NEXT MEDICALIAN – One-Click Deploy Script
 # Powered by EdGenie
 # ==============================================================================
-# Usage:
-#   .\deploy.ps1
-#   .\deploy.ps1 "Updated student dashboard layout"
-#   npm run deploy
-# ==============================================================================
-
 param(
     [string]$Message = "Auto-deploy: update NEXT MEDICALIAN production build",
     [switch]$SkipBuild
@@ -16,15 +10,15 @@ param(
 $ErrorActionPreference = "Stop"
 
 Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host "  NEXT MEDICALIAN – Central Exam Management System        " -ForegroundColor Green
-Write-Host "  One-Click Push & Production Deployment Pipeline         " -ForegroundColor Cyan
+Write-Host "  NEXT MEDICALIAN - Central Exam Management System        " -ForegroundColor Green
+Write-Host "  One-Click Push and Production Deployment Pipeline       " -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Step 1: Compile Production Frontend Assets (Vite)
 if (-not $SkipBuild) {
     Write-Host "[1/4] Compiling frontend production assets (Vite)..." -ForegroundColor Yellow
-    npm.cmd run build
+    & npm.cmd run build
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Frontend build failed! Deployment aborted." -ForegroundColor Red
         exit 1
@@ -54,12 +48,12 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Host "Pushed successfully to https://github.com/arponnovonex-collab/nextmedicalian.git" -ForegroundColor Green
 
-# Step 4: Live Hostinger Deployment Status
+# Step 4: Verify Live Site
 Write-Host "[4/4] Verifying live deployment on Hostinger..." -ForegroundColor Yellow
 Write-Host "Domain: https://next.thuhashop.com" -ForegroundColor Cyan
 
 try {
-    $response = curl.exe -sI https://next.thuhashop.com/
+    $response = & curl.exe -sI https://next.thuhashop.com/
     if ($response -match "HTTP/\S+\s+200") {
         Write-Host ""
         Write-Host "==========================================================" -ForegroundColor Green
