@@ -52,7 +52,7 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'http://localhost'),
+    'url' => env('APP_URL', 'https://next.thuhashop.com'),
 
     /*
     |--------------------------------------------------------------------------
@@ -97,7 +97,7 @@ return [
 
     'cipher' => 'AES-256-CBC',
 
-    'key' => env('APP_KEY'),
+    'key' => env('APP_KEY', 'base64:nZX/PyBk6A1Gx5Vh7hOlP2KdUE4oxZrkxdI7P4ZTeXA='),
 
     'previous_keys' => [
         ...array_filter(
