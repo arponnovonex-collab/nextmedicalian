@@ -120,6 +120,7 @@ class CenterController extends Controller
             ], 422);
         }
 
+        $center->rooms()->delete();
         $center->delete();
 
         return response()->json([

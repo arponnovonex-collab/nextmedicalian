@@ -145,4 +145,79 @@ class ZoneManagementTest extends TestCase
         $this->assertDatabaseHas('zones', ['id' => $zone->id]);
         $this->assertDatabaseHas('centers', ['id' => $center->id]);
     }
+
+    public function test_can_delete_empty_center(): void
+    {
+        $zone = Zone::create(['name' => 'Rajshahi', 'code' => 'RAJ-01']);
+        $center = Center::create([
+            'zone_id' => $zone->id,
+            'name' => 'Rajshahi College',
+            'code' => 'RAJ-C01',
+            'address' => 'Rajshahi Sadar',
+            'capacity' => 200,
+        ]);
+
+        $response = $this->deleteJson("/api/admin/centers/{$center->id}");
+
+        $response->assertStatus(200)
+            ->assertJson(['success' => true]);
+
+        $this->assertDatabaseMissing('centers', ['id' => $center->id]);
+    }
+
+    public function test_cannot_delete_center_with_registered_students(): void
+    {
+        $zone = Zone::create(['name' => 'Rangpur', 'code' => 'RAN-01']);
+        $center = Center::create([
+            'zone_id' => $zone->id,
+            'name' => 'Rangpur Test Center',
+            'code' => 'RAN-C01',
+            'address' => 'Rangpur City',
+            'capacity' => 100,
+        ]);
+
+        $studentUser = User::create([
+            'name' => 'Candidate Two',
+            'username' => '1799999999',
+            'phone' => '01799999999',
+            'password' => Hash::make('password123'),
+            'role' => 'student',
+            'is_active' => true,
+        ]);
+
+        $studentProfile = StudentProfile::create([
+            'user_id' => $studentUser->id,
+            'registration_number' => '1799999999',
+            'canonical_phone' => '01799999999',
+            'gender' => 'female',
+        ]);
+
+        $exam = Exam::create([
+            'title' => 'Pre-Med 2026 Batch B',
+            'code' => 'PM-2026-B',
+            'exam_date' => now()->addDays(5)->toDateString(),
+            'start_time' => '10:00:00',
+            'end_time' => '11:00:00',
+            'total_marks' => 100,
+            'total_questions' => 100,
+            'marks_per_correct' => 1.0,
+            'negative_marks_per_incorrect' => 0.25,
+            'pass_marks' => 40,
+        ]);
+
+        ExamRegistration::create([
+            'exam_id' => $exam->id,
+            'student_id' => $studentProfile->id,
+            'center_id' => $center->id,
+            'admit_card_token' => 'VALID_TEST_ADMIT_TOKEN_99999',
+            'status' => 'registered',
+        ]);
+
+        $response = $this->deleteJson("/api/admin/centers/{$center->id}");
+
+        $response->assertStatus(422)
+            ->assertJson(['success' => false]);
+
+        $this->assertDatabaseHas('centers', ['id' => $center->id]);
+    }
 }

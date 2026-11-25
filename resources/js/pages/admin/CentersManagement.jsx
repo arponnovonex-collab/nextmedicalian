@@ -17,6 +17,13 @@ import {
 
 export default function CentersManagement() {
   const [activeTab, setActiveTab] = useState('centers'); // 'centers' or 'zones'
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('tab') === 'zones') {
+      setActiveTab('zones');
+    }
+  }, []);
   const [centers, setCenters] = useState([]);
   const [zones, setZones] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -134,6 +141,22 @@ export default function CentersManagement() {
       fetchCenters();
     } catch (err) {
       alert(err.response?.data?.message || 'Error saving center.');
+    }
+  };
+
+  const handleDeleteCenter = async (center) => {
+    if (!confirm(`Are you sure you want to delete examination center "${center.name}" (${center.code})?`)) {
+      return;
+    }
+
+    try {
+      const res = await api.delete(`/admin/centers/${center.id}`);
+      if (res.data.success) {
+        alert(res.data.message || 'Examination center deleted successfully.');
+        fetchCenters();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error deleting examination center.');
     }
   };
 
@@ -256,20 +279,52 @@ export default function CentersManagement() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-slate-200">
-        <button
-          onClick={() => setActiveTab('centers')}
-          className={`pb-3 px-4 text-xs font-bold uppercase tracking-wider transition-all border-b-2 ${activeTab === 'centers' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
-        >
-          Examination Centers ({centers.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('zones')}
-          className={`pb-3 px-4 text-xs font-bold uppercase tracking-wider transition-all border-b-2 ${activeTab === 'zones' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
-        >
-          Administrative Zones ({zones.length})
-        </button>
+      {/* Segmented Tabs Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-1.5 bg-slate-100 rounded-2xl border border-slate-200/80">
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setActiveTab('centers')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'centers'
+                ? 'bg-white text-blue-700 shadow-xs border border-slate-200/60'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+            }`}
+          >
+            <Building className="w-4 h-4 text-blue-600" />
+            <span>Examination Centers</span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+              {centers.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('zones')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'zones'
+                ? 'bg-white text-blue-700 shadow-xs border border-slate-200/60'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+            }`}
+          >
+            <MapPin className="w-4 h-4 text-emerald-600" />
+            <span>Administrative Zones</span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
+              {zones.length}
+            </span>
+          </button>
+        </div>
+
+        {activeTab === 'centers' && (
+          <button
+            type="button"
+            onClick={() => setActiveTab('zones')}
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-slate-700 hover:text-blue-700 hover:bg-white rounded-xl transition-all cursor-pointer"
+          >
+            <Layers className="w-3.5 h-3.5 text-slate-500" />
+            Switch to Zones &rarr;
+          </button>
+        )}
       </div>
 
       {activeTab === 'centers' ? (
@@ -287,17 +342,27 @@ export default function CentersManagement() {
               />
             </div>
 
-            <div className="w-full sm:w-auto">
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
               <select
                 value={selectedZoneFilter}
                 onChange={(e) => setSelectedZoneFilter(e.target.value)}
                 className="px-3 py-2 text-xs font-semibold text-slate-700 border border-slate-200 rounded-xl focus:outline-hidden bg-white w-full sm:w-auto"
               >
-                <option value="">All Zones</option>
+                <option value="">All Zones ({zones.length})</option>
                 {zones.map(z => (
                   <option key={z.id} value={z.id}>{z.name} ({z.code})</option>
                 ))}
               </select>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('zones')}
+                className="whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition-colors cursor-pointer"
+                title="Manage and Delete Zones"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                Manage / Delete Zones
+              </button>
             </div>
           </div>
 
@@ -362,16 +427,23 @@ export default function CentersManagement() {
                       <button
                         onClick={() => handleOpenRooms(center)}
                         title="Manage Center Rooms"
-                        className="p-1.5 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="p-1.5 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
                       >
                         <DoorOpen className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleOpenEditCenter(center)}
                         title="Edit Center"
-                        className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                        className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                       >
                         <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCenter(center)}
+                        title="Delete Center"
+                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -382,44 +454,82 @@ export default function CentersManagement() {
         </div>
       ) : (
         /* Zones Table */
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden max-w-3xl">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
-                <th className="py-3 px-4">Zone Name</th>
-                <th className="py-3 px-4">Zone Code</th>
-                <th className="py-3 px-4">Centers Count</th>
-                <th className="py-3 px-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-              {zones.map(zone => (
-                <tr key={zone.id} className="hover:bg-slate-50/60">
-                  <td className="py-3 px-4 font-bold text-slate-900">{zone.name}</td>
-                  <td className="py-3 px-4 font-mono font-bold text-blue-600">{zone.code}</td>
-                  <td className="py-3 px-4">{zone.centers_count || 0} Test Centers</td>
-                  <td className="py-3 px-4 text-right">
-                    <div className="flex items-center justify-end gap-1.5">
-                      <button
-                        onClick={() => handleEditZone(zone)}
-                        className="p-1.5 hover:bg-slate-100 text-slate-600 rounded-lg transition-colors cursor-pointer"
-                        title="Edit Zone"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteZone(zone)}
-                        className="p-1.5 hover:bg-rose-50 text-rose-600 rounded-lg transition-colors cursor-pointer"
-                        title="Delete Zone"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-bold text-slate-900">Administrative Zones List</h2>
+              <p className="text-xs text-slate-500">Edit zone details or delete administrative zones.</p>
+            </div>
+            <button
+              onClick={handleOpenCreateZone}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm transition-colors cursor-pointer"
+            >
+              <Plus className="w-4 h-4" /> Add New Zone
+            </button>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden max-w-4xl">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                  <th className="py-3 px-4">Zone Name</th>
+                  <th className="py-3 px-4">Zone Code</th>
+                  <th className="py-3 px-4">Centers Count</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+                {zones.length === 0 ? (
+                  <tr>
+                    <td colSpan="4" className="py-8 text-center text-slate-400">
+                      No administrative zones defined. Click "Add New Zone" to create one.
+                    </td>
+                  </tr>
+                ) : (
+                  zones.map(zone => (
+                    <tr key={zone.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-3 px-4 font-bold text-slate-900 text-sm">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-blue-600" />
+                          <span>{zone.name}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="font-mono font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
+                          {zone.code}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 font-semibold text-slate-600">
+                        {zone.centers_count || 0} Test Centers
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleEditZone(zone)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+                            title="Edit Zone"
+                          >
+                            <Edit className="w-3.5 h-3.5 text-slate-500" />
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteZone(zone)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-colors cursor-pointer"
+                            title="Delete Zone"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                            Delete Zone
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -545,20 +655,34 @@ export default function CentersManagement() {
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={() => setIsCenterModalOpen(false)}
-              className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-blue-700"
-            >
-              Save Center
-            </button>
+          <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+            {editingCenter ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCenterModalOpen(false);
+                  handleDeleteCenter(editingCenter);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Delete Center
+              </button>
+            ) : <div />}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsCenterModalOpen(false)}
+                className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-blue-700 cursor-pointer"
+              >
+                {editingCenter ? 'Update Center' : 'Save Center'}
+              </button>
+            </div>
           </div>
         </form>
       </Modal>
@@ -598,20 +722,34 @@ export default function CentersManagement() {
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={() => setIsZoneModalOpen(false)}
-              className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-blue-700"
-            >
-              {editingZone ? 'Update Zone' : 'Save Zone'}
-            </button>
+          <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+            {editingZone ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsZoneModalOpen(false);
+                  handleDeleteZone(editingZone);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Delete Zone
+              </button>
+            ) : <div />}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsZoneModalOpen(false)}
+                className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-blue-700 cursor-pointer"
+              >
+                {editingZone ? 'Update Zone' : 'Save Zone'}
+              </button>
+            </div>
           </div>
         </form>
       </Modal>
