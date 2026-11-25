@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Admin\BulkStudentImportController;
 use App\Http\Controllers\Api\Admin\CenterController;
 use App\Http\Controllers\Api\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Api\Admin\EvaluationMonitorController;
@@ -71,18 +72,19 @@ Route::middleware('auth:sanctum')->group(function () {
         // Student Management & Excel Import
         Route::get('/students', [StudentController::class, 'index']);
         Route::post('/students', [StudentController::class, 'store']);
+        Route::post('/students/import-medicalian-dataset', [BulkStudentImportController::class, 'import']);
+        Route::post('/students/import/medicalian-dataset', [BulkStudentImportController::class, 'import']);
+        Route::get('/students/import/template', [StudentImportController::class, 'template']);
+        Route::post('/students/import/preview', [StudentImportController::class, 'preview']);
+        Route::post('/students/import/confirm', [StudentImportController::class, 'confirm']);
+        Route::get('/students/import/credentials/{token}', [StudentImportController::class, 'exportCredentials']);
+
         Route::get('/students/{id}', [StudentController::class, 'show']);
         Route::put('/students/{id}', [StudentController::class, 'update']);
         Route::post('/students/{id}/reassign-seat', [StudentController::class, 'reassignSeat']);
         Route::post('/students/{id}/reset-password', [StudentController::class, 'resetPassword']);
         Route::patch('/students/{id}/toggle-status', [StudentController::class, 'toggleStatus']);
         Route::get('/students/{id}/admit-card', [StudentController::class, 'downloadAdmitCard']);
-
-        // Excel Import Workflow
-        Route::get('/students/import/template', [StudentImportController::class, 'template']);
-        Route::post('/students/import/preview', [StudentImportController::class, 'preview']);
-        Route::post('/students/import/confirm', [StudentImportController::class, 'confirm']);
-        Route::get('/students/import/credentials/{token}', [StudentImportController::class, 'exportCredentials']);
 
         // Teachers Management
         Route::apiResource('teachers', TeacherController::class);
