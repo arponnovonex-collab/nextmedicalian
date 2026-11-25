@@ -153,6 +153,30 @@ export default function ExamsManagement() {
     }
   };
 
+  const handleDeleteExam = async (exam, force = false) => {
+    if (!force && !confirm(`Are you sure you want to delete examination "${exam.title}" (${exam.code})?`)) {
+      return;
+    }
+
+    try {
+      const url = force ? `/admin/exams/${exam.id}?force=true` : `/admin/exams/${exam.id}`;
+      const res = await api.delete(url);
+      if (res.data.success) {
+        alert(res.data.message || 'Examination deleted successfully.');
+        fetchExams();
+      }
+    } catch (err) {
+      if (err.response?.data?.has_registrations) {
+        if (confirm(`${err.response.data.message}\n\nDo you want to FORCE DELETE this examination along with all its ${err.response.data.registrations_count} candidate registrations, marks, and results?\n\nWarning: This action is permanent and cannot be undone.`)) {
+          handleDeleteExam(exam, true);
+          return;
+        }
+      } else {
+        alert(err.response?.data?.message || 'Error deleting examination.');
+      }
+    }
+  };
+
   const handleOpenCenters = async (exam) => {
     setActiveExamForCenters(exam);
     try {
@@ -300,16 +324,23 @@ export default function ExamsManagement() {
                         <button
                           onClick={() => handleOpenCenters(exam)}
                           title="Assign Examination Centers"
-                          className="p-1.5 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
                         >
                           <Building className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleOpenEdit(exam)}
                           title="Edit Examination"
-                          className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                         >
                           <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteExam(exam)}
+                          title="Delete Examination"
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
@@ -468,20 +499,34 @@ export default function ExamsManagement() {
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(false)}
-              className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-50 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-blue-700 transition-colors"
-            >
-              Save Examination
-            </button>
+          <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+            {editingExam ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsModalOpen(false);
+                  handleDeleteExam(editingExam);
+                }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Delete Examination
+              </button>
+            ) : <div />}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-blue-700 transition-colors cursor-pointer"
+              >
+                {editingExam ? 'Update Examination' : 'Save Examination'}
+              </button>
+            </div>
           </div>
         </form>
       </Modal>

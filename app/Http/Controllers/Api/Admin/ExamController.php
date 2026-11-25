@@ -8,6 +8,7 @@ use App\Models\ExamCenter;
 use App\Services\AuditLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ExamController extends Controller
 {
@@ -225,19 +226,32 @@ class ExamController extends Controller
         $exam = Exam::findOrFail($id);
 
         if ($exam->registrations()->exists()) {
-            // Soft archive instead of hard delete to preserve historical integrity
-            $exam->update(['status' => 'archived']);
+            if ($request->boolean('force')) {
+                DB::transaction(function () use ($exam) {
+                    $exam->delete();
+                });
+
+                return response()->json([
+                    'success' => true,
+                    'message' => "Examination '{$exam->title}' and all its candidate registrations were permanently deleted.",
+                ]);
+            }
+
             return response()->json([
-                'success' => true,
-                'message' => 'Examination contains registrations; safely archived instead of deleted.',
-            ]);
+                'success' => false,
+                'has_registrations' => true,
+                'registrations_count' => $exam->registrations()->count(),
+                'message' => "Examination '{$exam->title}' contains {$exam->registrations()->count()} registered student(s).",
+            ], 422);
         }
 
-        $exam->delete();
+        DB::transaction(function () use ($exam) {
+            $exam->delete();
+        });
 
         return response()->json([
             'success' => true,
-            'message' => 'Examination deleted successfully',
+            'message' => "Examination '{$exam->title}' deleted successfully",
         ]);
     }
 }
