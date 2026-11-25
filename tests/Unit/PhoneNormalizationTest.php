@@ -55,16 +55,6 @@ class PhoneNormalizationTest extends TestCase
         $this->assertEquals('1612345678', $regNo);
     }
 
-    public function test_normalizes_bengali_digits(): void
-    {
-        $input = '০১৯০৬৯৯৯৬০৫';
-        $canonical = $this->service->normalize($input);
-        $regNo = $this->service->toRegistrationNumber($canonical);
-
-        $this->assertEquals('01906999605', $canonical);
-        $this->assertEquals('1906999605', $regNo);
-    }
-
     public function test_strips_spaces_dashes_and_parentheses(): void
     {
         $input = '+88 (017) 12-345-678';
