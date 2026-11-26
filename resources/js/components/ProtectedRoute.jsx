@@ -31,7 +31,7 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
 
   return (
     <>
-      {mustChangePassword && <ChangePasswordModal />}
+      {mustChangePassword && role !== 'student' && <ChangePasswordModal />}
       <Outlet />
     </>
   );

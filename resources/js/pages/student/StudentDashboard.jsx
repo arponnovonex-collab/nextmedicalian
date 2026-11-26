@@ -213,12 +213,17 @@ export default function StudentDashboard() {
                         </div>
                       </div>
 
-                      {/* Google Maps Embed Preview if available */}
-                      {currentExam.center.google_maps_embed_url && (
-                        <div className="rounded-xl overflow-hidden border border-slate-200 h-48 bg-slate-100">
+                      {/* Google Maps Interactive Location Embed */}
+                      {(currentExam.center.google_maps_embed_url || currentExam.center.name) && (
+                        <div className="rounded-2xl overflow-hidden border border-slate-200 h-56 bg-slate-100 shadow-inner">
                           <iframe
-                            title="Center Location"
-                            src={currentExam.center.google_maps_embed_url}
+                            title="Center Location Map"
+                            src={
+                              currentExam.center.google_maps_embed_url ||
+                              `https://maps.google.com/maps?q=${encodeURIComponent(
+                                currentExam.center.name + ', ' + (currentExam.center.address || '')
+                              )}&t=&z=15&ie=UTF8&iwloc=&output=embed`
+                            }
                             width="100%"
                             height="100%"
                             style={{ border: 0 }}
