@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../api/axios';
+import api, { downloadFile } from '../../api/axios';
 import Modal from '../../components/Modal';
 import StatusBadge from '../../components/StatusBadge';
 import {
@@ -213,6 +213,13 @@ export default function StudentsManagement() {
     }
   };
 
+  const handleExportCredentials = () => {
+    let url = `/admin/students/export-credentials?`;
+    if (selectedExamId) url += `&exam_id=${selectedExamId}`;
+    if (selectedCenterId) url += `&center_id=${selectedCenterId}`;
+    downloadFile(url, `student_sms_credentials.csv`);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -222,12 +229,21 @@ export default function StudentsManagement() {
           <p className="text-xs text-slate-500 mt-1">Manage enrolled candidates, seat allocations, credentials, and verification status.</p>
         </div>
 
-        <button
-          onClick={handleOpenManual}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition-colors cursor-pointer"
-        >
-          <Plus className="w-4 h-4" /> Enroll Individual Student
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            onClick={handleExportCredentials}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition-colors cursor-pointer"
+          >
+            <Download className="w-4 h-4" /> Export ID & Passwords (CSV for SMS)
+          </button>
+
+          <button
+            onClick={handleOpenManual}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition-colors cursor-pointer"
+          >
+            <Plus className="w-4 h-4" /> Enroll Individual Student
+          </button>
+        </div>
       </div>
 
       {/* Filter Toolbar */}
@@ -324,8 +340,15 @@ export default function StudentsManagement() {
                   <tr key={reg.id} className="hover:bg-slate-50/60 transition-colors">
                     <td className="py-3.5 px-4">
                       <div className="font-bold text-slate-900 text-sm">{reg.student?.user?.name}</div>
-                      <div className="text-[11px] font-mono font-bold text-blue-600">
-                        Reg: {reg.student?.registration_number} &bull; {reg.student?.canonical_phone}
+                      <div className="text-[11px] font-mono font-bold text-blue-600 flex flex-wrap items-center gap-1.5 mt-0.5">
+                        <span>Reg: {reg.student?.registration_number}</span>
+                        <span>&bull;</span>
+                        <span>{reg.student?.canonical_phone}</span>
+                        {reg.student?.temp_password && (
+                          <span className="bg-amber-100/90 text-amber-900 border border-amber-300 px-1.5 py-0.5 rounded text-[10px] font-mono font-black" title="4-Digit Password for SMS">
+                            Pass: {reg.student.temp_password}
+                          </span>
+                        )}
                       </div>
                       <div className="text-[10px] text-slate-400">{reg.student?.institution || 'General Candidate'} ({reg.student?.hsc_batch || 'HSC'})</div>
                     </td>

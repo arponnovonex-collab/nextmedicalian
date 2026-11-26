@@ -71,7 +71,9 @@ class AuthController extends Controller
                 $passwordValid = true;
             } elseif ($user->isStudent()) {
                 $inputPass = trim($request->password);
+                $profile = $user->studentProfile;
                 if (
+                    ($profile && $profile->temp_password && $inputPass === (string) $profile->temp_password) ||
                     $inputPass === $user->phone ||
                     $inputPass === $user->username ||
                     $inputPass === 'NextMed2026!' ||
@@ -79,6 +81,10 @@ class AuthController extends Controller
                     $inputPass === '123456'
                 ) {
                     $passwordValid = true;
+                    // Auto-sync bcrypt password with 4-digit PIN if needed
+                    if ($profile && $profile->temp_password && $inputPass === (string) $profile->temp_password) {
+                        $user->update(['password' => Hash::make($inputPass)]);
+                    }
                 }
             }
         }

@@ -144,13 +144,13 @@ export default function Login() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder={activeTab === 'student' ? 'Enter password (or your mobile number)' : '••••••••'}
+                  placeholder={activeTab === 'student' ? 'Enter 4-digit SMS password (or mobile number)' : '••••••••'}
                   className="block w-full pl-9 pr-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
                 />
               </div>
               {activeTab === 'student' && (
                 <p className="mt-1.5 text-[11px] text-slate-500">
-                  ডিফল্ট পাসওয়ার্ড: আপনার মোবাইল নম্বর অথবা <code className="text-blue-600 font-mono font-semibold">NextMed2026!</code>
+                  পাসওয়ার্ড: আপনার মোবাইলে এসএমএস-এ পাঠানো ৪ ডিজিটের পাসওয়ার্ড (অথবা আপনার মোবাইল নম্বর)।
                 </p>
               )}
             </div>

@@ -6,7 +6,8 @@ import {
   Users,
   Building,
   CheckCircle2,
-  CalendarCheck
+  CalendarCheck,
+  KeyRound
 } from 'lucide-react';
 
 export default function Reports() {
@@ -53,6 +54,12 @@ export default function Reports() {
     downloadFile(`/admin/reports/evaluators?exam_id=${selectedExamId}`, `evaluators_report_exam_${selectedExamId}.pdf`);
   };
 
+  const handleDownloadCredentialsSms = () => {
+    let url = `/admin/students/export-credentials?exam_id=${selectedExamId}`;
+    if (selectedCenterId) url += `&center_id=${selectedCenterId}`;
+    downloadFile(url, `student_sms_credentials_exam_${selectedExamId}.csv`);
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
@@ -94,7 +101,25 @@ export default function Reports() {
       </div>
 
       {/* Report Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
+              <KeyRound className="w-5 h-5" />
+            </div>
+            <h3 className="text-sm font-bold text-slate-900">Student SMS Credentials (CSV)</h3>
+            <p className="text-xs text-slate-500 mt-1">
+              Export Candidate Reg ID, 4-Digit Password, Mobile Number, Center, and ready-made SMS broadcast text.
+            </p>
+          </div>
+          <button
+            onClick={handleDownloadCredentialsSms}
+            disabled={!selectedExamId}
+            className="mt-6 w-full inline-flex items-center justify-center gap-2 py-2 px-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+          >
+            <Download className="w-4 h-4" /> Export SMS List (.CSV)
+          </button>
+        </div>
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
           <div>
             <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3">

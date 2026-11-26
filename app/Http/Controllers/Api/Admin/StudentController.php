@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class StudentController extends Controller
 {
@@ -121,7 +122,7 @@ class StudentController extends Controller
             $tempPassword = null;
 
             if (! $studentProfile) {
-                $tempPassword = 'Med' . random_int(10000, 99999);
+                $tempPassword = (string) mt_rand(1000, 9999);
                 $user = User::create([
                     'name' => $request->name,
                     'username' => $regNo,
@@ -130,13 +131,14 @@ class StudentController extends Controller
                     'password' => Hash::make($tempPassword),
                     'role' => 'student',
                     'is_active' => true,
-                    'must_change_password' => true,
+                    'must_change_password' => false,
                 ]);
 
                 $studentProfile = StudentProfile::create([
                     'user_id' => $user->id,
                     'registration_number' => $regNo,
                     'canonical_phone' => $canonicalPhone,
+                    'temp_password' => $tempPassword,
                     'institution' => $request->institution,
                     'hsc_batch' => $request->hsc_batch,
                     'gender' => $request->gender,
@@ -145,6 +147,11 @@ class StudentController extends Controller
                 ]);
 
                 $isNew = true;
+            } elseif (empty($studentProfile->temp_password)) {
+                $tempPassword = (string) mt_rand(1000, 9999);
+                $studentProfile->update(['temp_password' => $tempPassword]);
+            } else {
+                $tempPassword = $studentProfile->temp_password;
             }
 
             // Check if student already enrolled in this examination
@@ -307,11 +314,15 @@ class StudentController extends Controller
     {
         $registration = ExamRegistration::with('student.user')->findOrFail($id);
         $user = $registration->student->user;
+        $student = $registration->student;
 
-        $newPassword = 'Med' . random_int(10000, 99999);
+        $newPassword = (string) mt_rand(1000, 9999);
         $user->update([
             'password' => Hash::make($newPassword),
-            'must_change_password' => true,
+            'must_change_password' => false,
+        ]);
+        $student->update([
+            'temp_password' => $newPassword,
         ]);
 
         $this->auditLogService->log(
@@ -323,7 +334,7 @@ class StudentController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Password reset successfully',
+            'message' => '4-digit password generated successfully',
             'data' => [
                 'registration_number' => $registration->student->registration_number,
                 'new_temporary_password' => $newPassword,
@@ -342,6 +353,153 @@ class StudentController extends Controller
             'success' => true,
             'message' => 'Student account ' . ($user->is_active ? 'activated' : 'deactivated'),
             'data' => ['is_active' => $user->is_active],
+        ]);
+    }
+
+    public function exportCredentials(Request $request): StreamedResponse
+    {
+        $examId = $request->query('exam_id');
+        $centerId = $request->query('center_id');
+        $zoneId = $request->query('zone_id');
+
+        $query = ExamRegistration::with([
+            'student.user',
+            'exam',
+            'center.zone',
+            'room',
+        ]);
+
+        if ($examId) {
+            $query->where('exam_id', $examId);
+        }
+
+        if ($centerId) {
+            $query->where('center_id', $centerId);
+        }
+
+        if ($zoneId) {
+            $query->whereHas('center', fn ($q) => $q->where('zone_id', $zoneId));
+        }
+
+        $filename = 'student_sms_credentials_' . now()->format('Ymd_His') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        return response()->stream(function () use ($query) {
+            $output = fopen('php://output', 'w');
+
+            // UTF-8 BOM for Windows Excel compatibility
+            fputs($output, "\xEF\xBB\xBF");
+
+            // CSV Header
+            fputcsv($output, [
+                'SL',
+                'Candidate Name',
+                'Registration Number (Username)',
+                '4-Digit Password',
+                'Mobile Number (SMS)',
+                'Assigned Center',
+                'Center Address',
+                'Zone',
+                'Room Number',
+                'Seat Number',
+                'Institution',
+                'HSC Batch',
+                'Exam Code',
+                'Exam Date',
+                'SMS Content (Ready to Send)',
+            ]);
+
+            $sl = 1;
+
+            $query->chunkById(500, function ($registrations) use ($output, &$sl) {
+                foreach ($registrations as $reg) {
+                    $student = $reg->student;
+                    $user = $student?->user;
+                    $center = $reg->center;
+                    $exam = $reg->exam;
+
+                    // Ensure valid 4-digit PIN
+                    $password = $student?->temp_password;
+                    if (empty($password) || strlen($password) !== 4) {
+                        $password = (string) mt_rand(1000, 9999);
+                        $student?->update(['temp_password' => $password]);
+                    }
+
+                    $regNo = $student?->registration_number ?? ($user?->username ?? '');
+                    $phone = $student?->canonical_phone ?? ($user?->phone ?? '');
+                    $name = $user?->name ?? 'Candidate';
+                    $centerName = $center?->name ?? 'Assigned Center';
+                    $examCode = $exam?->code ?? 'NME-26';
+                    $examDate = $exam?->exam_date ? \Carbon\Carbon::parse($exam->exam_date)->format('d F, Y') : '';
+
+                    // SMS text ready for SMS gateways
+                    $smsMessage = "Dear {$name}, NEXT MEDICALIAN 2026. Reg ID: {$regNo}, Pass: {$password}. Center: {$centerName}. Download Admit: https://next.thuhashop.com";
+
+                    fputcsv($output, [
+                        $sl++,
+                        $name,
+                        $regNo,
+                        $password,
+                        $phone,
+                        $centerName,
+                        $center?->address ?? '',
+                        $center?->zone?->name ?? '',
+                        $reg->room?->room_number ?? 'To be notified',
+                        $reg->seat_number ?? 'To be notified',
+                        $student?->institution ?? '',
+                        $student?->hsc_batch ?? '',
+                        $examCode,
+                        $examDate,
+                        $smsMessage,
+                    ]);
+                }
+            });
+
+            fclose($output);
+        }, 200, $headers);
+    }
+
+    public function generatePasswords(Request $request): JsonResponse
+    {
+        $examId = $request->input('exam_id');
+        $force = (bool) $request->input('force', false);
+
+        $query = StudentProfile::query();
+        if ($examId) {
+            $studentIds = ExamRegistration::where('exam_id', $examId)->pluck('student_id');
+            $query->whereIn('id', $studentIds);
+        }
+
+        if (! $force) {
+            $query->where(function ($q) {
+                $q->whereNull('temp_password')
+                    ->orWhere('temp_password', '')
+                    ->orWhereRaw('LENGTH(temp_password) != 4');
+            });
+        }
+
+        $count = 0;
+        $query->chunkById(500, function ($profiles) use (&$count) {
+            DB::transaction(function () use ($profiles, &$count) {
+                foreach ($profiles as $profile) {
+                    $profile->temp_password = (string) mt_rand(1000, 9999);
+                    $profile->save();
+                    $count++;
+                }
+            });
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully generated 4-digit passwords for {$count} candidates.",
+            'count' => $count,
         ]);
     }
 }

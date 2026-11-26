@@ -78,6 +78,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/students/import/preview', [StudentImportController::class, 'preview']);
         Route::post('/students/import/confirm', [StudentImportController::class, 'confirm']);
         Route::get('/students/import/credentials/{token}', [StudentImportController::class, 'exportCredentials']);
+        Route::get('/students/export-credentials', [StudentController::class, 'exportCredentials']);
+        Route::post('/students/generate-passwords', [StudentController::class, 'generatePasswords']);
 
         Route::get('/students/{id}', [StudentController::class, 'show']);
         Route::put('/students/{id}', [StudentController::class, 'update']);

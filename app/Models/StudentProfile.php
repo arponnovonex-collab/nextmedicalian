@@ -15,6 +15,7 @@ class StudentProfile extends Model
         'user_id',
         'registration_number',
         'canonical_phone',
+        'temp_password',
         'institution',
         'hsc_batch',
         'gender',
