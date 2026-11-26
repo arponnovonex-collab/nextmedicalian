@@ -237,31 +237,37 @@
                 $rawInstructions = \App\Models\SystemSetting::where('key', 'admit_card_instructions')->value('value') ?? '';
             }
 
-            $defaultInstructions = [
-                '১. পরীক্ষা শুরুর অন্তত ৩০ মিনিট আগে নির্ধারিত ভেন্যুতে উপস্থিত হতে হবে।',
-                '২. উত্তরপত্র পূরণের জন্য কালো বলপয়েন্ট কলম সঙ্গে আনতে হবে।',
-                '৩. পরীক্ষার হলে মোবাইল ফোন, ক্যালকুলেটর, স্মার্টওয়াচ কিংবা কোনো ধরনের ইলেকট্রনিক ডিভাইস ব্যবহার করা যাবে না। এনে থাকলে তা পরীক্ষা শুরুর পূর্বেই invigilator এর নিকট জমা দিতে হবে।',
-                '৪. OMR শিটে নাম, রোল নম্বর ও প্রয়োজনীয় তথ্য নির্ভুলভাবে পূরণ করতে হবে। রোল নম্বর তোমাদের admit card এ আছে।',
-                '৫. উত্তর প্রদানের ক্ষেত্রে OMR শিটের নির্ধারিত বৃত্ত সম্পূর্ণ ভরাট করতে হবে।',
-                '৬. পরীক্ষার হলে কোনো ধরনের অসদুপায় অবলম্বন করা যাবে না।',
-                '৭. পরীক্ষা শেষ হওয়ার আগে অনুমতি ছাড়া পরীক্ষার হল ত্যাগ করা যাবে না।',
-            ];
-
-            if (!empty($rawInstructions)) {
-                $lines = array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', $rawInstructions)));
-            } else {
-                $lines = $defaultInstructions;
-            }
+            // Check if default instructions apply
+            $isDefault = empty($rawInstructions) || str_contains($rawInstructions, '৩০ মিনিট আগে') || str_contains($rawInstructions, 'বলপয়েন্ট') || str_contains($rawInstructions, 'বলপয়েন্ট');
         @endphp
 
-        <div class="section-heading" style="font-family: 'kalpurush', 'DejaVu Sans', sans-serif;">পরীক্ষার্থীদের জন্য বিশেষ নির্দেশনাবলী / Instructions for Candidates</div>
-        <div class="instructions">
-            @foreach($lines as $line)
-                @if(!empty($line))
-                    <div style="margin-bottom: 2.5px;">{{ $line }}</div>
-                @endif
-            @endforeach
-        </div>
+        @if(!empty($instructionsDataUri) && $isDefault)
+            <div style="margin-bottom: 8px;">
+                <img src="{{ $instructionsDataUri }}" alt="Special Instructions" style="width: 100%; display: block; border: 0;">
+            </div>
+        @else
+            <div class="section-heading" style="font-family: 'kalpurush', 'DejaVu Sans', sans-serif;">পরীক্ষার্থীদের জন্য বিশেষ নির্দেশনাবলী / Instructions for Candidates</div>
+            <div class="instructions">
+                @php
+                    $lines = !empty($rawInstructions) 
+                        ? array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', $rawInstructions)))
+                        : [
+                            '১. পরীক্ষা শুরুর অন্তত ৩০ মিনিট আগে নির্ধারিত ভেন্যুতে উপস্থিত হতে হবে।',
+                            '২. উত্তরপত্র পূরণের জন্য কালো বলপয়েন্ট কলম সঙ্গে আনতে হবে।',
+                            '৩. পরীক্ষার হলে মোবাইল ফোন, ক্যালকুলেটর, স্মার্টওয়াচ কিংবা কোনো ধরনের ইলেকট্রনিক ডিভাইস ব্যবহার করা যাবে না। এনে থাকলে তা পরীক্ষা শুরুর পূর্বেই invigilator এর নিকট জমা দিতে হবে।',
+                            '৪. OMR শিটে নাম, রোল নম্বর ও প্রয়োজনীয় তথ্য নির্ভুলভাবে পূরণ করতে হবে। রোল নম্বর তোমাদের admit card এ আছে।',
+                            '৫. উত্তর প্রদানের ক্ষেত্রে OMR শিটের নির্ধারিত বৃত্ত সম্পূর্ণ ভরাট করতে হবে।',
+                            '৬. পরীক্ষার হলে কোনো ধরনের অসদুপায় অবলম্বন করা যাবে না।',
+                            '৭. পরীক্ষা শেষ হওয়ার আগে অনুমতি ছাড়া পরীক্ষার হল ত্যাগ করা যাবে না।',
+                        ];
+                @endphp
+                @foreach($lines as $line)
+                    @if(!empty($line))
+                        <div style="margin-bottom: 2.5px;">{{ $line }}</div>
+                    @endif
+                @endforeach
+            </div>
+        @endif
 
         <table class="footer-table">
             <tr>
@@ -291,9 +297,6 @@
                 </td>
             </tr>
         </table>
-    </div>
-</body>
-</html>
     </div>
 </body>
 </html>

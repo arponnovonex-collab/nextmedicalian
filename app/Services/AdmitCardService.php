@@ -27,29 +27,30 @@ class AdmitCardService
         $qrDataUri = $this->qrService->toDataUri($verificationUrl, 100);
 
         // Resolve signature: Exam specific first, fallback to System Setting
-        $rawSignature = $registration->exam->signature_path;
-        if (empty($rawSignature) && class_exists(\App\Models\SystemSetting::class)) {
-            $rawSignature = \App\Models\SystemSetting::where('key', 'authorized_signature_image')->value('value');
-        }
-
         $signatureDataUri = null;
-        if (! empty($rawSignature)) {
-            if (str_starts_with($rawSignature, 'data:image')) {
-                $signatureDataUri = $rawSignature;
-            } else {
-                $cleanPath = ltrim(str_replace('/storage/', '', $rawSignature), '/');
-                $candidatePaths = [
-                    storage_path('app/public/' . $cleanPath),
-                    public_path($rawSignature),
-                    public_path('storage/' . $cleanPath),
-                    base_path($rawSignature),
-                ];
-                foreach ($candidatePaths as $cp) {
-                    if (file_exists($cp) && is_file($cp)) {
-                        $mime = mime_content_type($cp) ?: 'image/png';
-                        $signatureDataUri = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($cp));
-                        break;
-                    }
+        $candidates = array_filter([
+            $registration->exam->signature_path ?? null,
+            class_exists(\App\Models\SystemSetting::class) ? \App\Models\SystemSetting::where('key', 'authorized_signature_image')->value('value') : null,
+        ]);
+
+        foreach ($candidates as $rawSig) {
+            if (empty($rawSig)) continue;
+            if (str_starts_with($rawSig, 'data:image')) {
+                $signatureDataUri = $rawSig;
+                break;
+            }
+            $cleanPath = ltrim(str_replace('/storage/', '', $rawSig), '/');
+            $candidatePaths = [
+                storage_path('app/public/' . $cleanPath),
+                public_path($rawSig),
+                public_path('storage/' . $cleanPath),
+                base_path($rawSig),
+            ];
+            foreach ($candidatePaths as $cp) {
+                if (file_exists($cp) && is_file($cp)) {
+                    $mime = mime_content_type($cp) ?: 'image/png';
+                    $signatureDataUri = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($cp));
+                    break 2;
                 }
             }
         }
@@ -60,6 +61,13 @@ class AdmitCardService
             if (! empty($customTitle)) {
                 $signatureTitle = $customTitle;
             }
+        }
+
+        // Instructions Graphic Data URI
+        $instructionsDataUri = null;
+        $instImagePath = public_path('images/admit_instructions.png');
+        if (file_exists($instImagePath)) {
+            $instructionsDataUri = 'data:image/png;base64,' . base64_encode(file_get_contents($instImagePath));
         }
 
         $pdf = Pdf::setOptions([
@@ -78,6 +86,7 @@ class AdmitCardService
             'verificationUrl' => $verificationUrl,
             'signatureDataUri' => $signatureDataUri,
             'signatureTitle' => $signatureTitle,
+            'instructionsDataUri' => $instructionsDataUri,
         ])->setPaper('a4', 'portrait');
 
         $fontPath = storage_path('fonts/kalpurush.ttf');
