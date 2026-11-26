@@ -22,7 +22,7 @@ class QrCodeService
         $moduleSize = (int) floor($size / $gridSize);
         $actualSize = $moduleSize * $gridSize;
 
-        $svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{$actualSize}\" height=\"{$actualSize}\" viewBox=\"0 0 {$gridSize} {$gridSize}\">\n";
+        $svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{$actualSize}\" height=\"{$actualSize}\" viewBox=\"0 0 {$gridSize} {$gridSize}\" preserveAspectRatio=\"xMidYMid meet\">\n";
         $svg .= "<rect width=\"100%\" height=\"100%\" fill=\"#ffffff\"/>\n";
         $svg .= "<g fill=\"#0F172A\">\n";
 

@@ -61,7 +61,7 @@ class StudentPortalController extends Controller
                 'instructions' => $exam->instructions,
                 'status' => $exam->status,
                 'is_upcoming' => $isUpcoming,
-                'countdown_seconds' => $isUpcoming ? max(0, $now->diffInSeconds($examDateTime, false)) : 0,
+                'countdown_seconds' => (int) ($isUpcoming ? max(0, (int) round($now->diffInSeconds($examDateTime, false))) : 0),
                 'is_admit_available' => $exam->isAdmitCardDownloadable() && (bool) $center,
                 'admit_publish_date' => $exam->admit_card_publish_at?->format('d M, Y h:i A'),
                 'is_result_published' => $exam->isResultPublished(),

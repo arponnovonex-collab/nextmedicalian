@@ -46,18 +46,30 @@ export default function StudentDashboard() {
   useEffect(() => {
     if (!currentExam || !currentExam.countdown_seconds) return;
 
-    let remaining = currentExam.countdown_seconds;
+    let remaining = Math.max(0, Math.floor(Number(currentExam.countdown_seconds) || 0));
+
+    const updateTimer = (rem) => {
+      const days = Math.floor(rem / 86400);
+      const hours = Math.floor((rem % 86400) / 3600);
+      const minutes = Math.floor((rem % 3600) / 60);
+      const seconds = Math.floor(rem % 60);
+      setCountdown({
+        days: Math.floor(days),
+        hours: Math.floor(hours),
+        minutes: Math.floor(minutes),
+        seconds: Math.floor(seconds),
+      });
+    };
+
+    updateTimer(remaining);
+
     const interval = setInterval(() => {
       if (remaining <= 0) {
         clearInterval(interval);
         return;
       }
-      remaining--;
-      const days = Math.floor(remaining / 86400);
-      const hours = Math.floor((remaining % 86400) / 3600);
-      const minutes = Math.floor((remaining % 3600) / 60);
-      const seconds = remaining % 60;
-      setCountdown({ days, hours, minutes, seconds });
+      remaining = Math.max(0, Math.floor(remaining - 1));
+      updateTimer(remaining);
     }, 1000);
 
     return () => clearInterval(interval);
@@ -149,19 +161,19 @@ export default function StudentDashboard() {
                   {/* Countdown Box */}
                   <div className="grid grid-cols-4 gap-2 text-center">
                     <div className="bg-white/10 px-3 py-1.5 rounded-xl border border-white/10">
-                      <div className="text-lg font-black">{countdown.days}</div>
+                      <div className="text-lg font-black">{Math.floor(countdown.days)}</div>
                       <div className="text-[9px] uppercase font-bold text-blue-300">Days</div>
                     </div>
                     <div className="bg-white/10 px-3 py-1.5 rounded-xl border border-white/10">
-                      <div className="text-lg font-black">{countdown.hours}</div>
+                      <div className="text-lg font-black">{Math.floor(countdown.hours)}</div>
                       <div className="text-[9px] uppercase font-bold text-blue-300">Hours</div>
                     </div>
                     <div className="bg-white/10 px-3 py-1.5 rounded-xl border border-white/10">
-                      <div className="text-lg font-black">{countdown.minutes}</div>
+                      <div className="text-lg font-black">{Math.floor(countdown.minutes)}</div>
                       <div className="text-[9px] uppercase font-bold text-blue-300">Mins</div>
                     </div>
                     <div className="bg-white/10 px-3 py-1.5 rounded-xl border border-white/10">
-                      <div className="text-lg font-black">{countdown.seconds}</div>
+                      <div className="text-lg font-black">{Math.floor(countdown.seconds)}</div>
                       <div className="text-[9px] uppercase font-bold text-blue-300">Secs</div>
                     </div>
                   </div>

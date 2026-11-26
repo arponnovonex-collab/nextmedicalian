@@ -226,8 +226,10 @@
         <table style="width: 100%; margin-top: 20px;">
             <tr>
                 <td style="width: 50%; vertical-align: bottom;">
-                    <img src="{{ $qrDataUri }}" alt="Verification QR Code" style="width: 75px; height: 75px; display: block; border: 1px solid #cbd5e1; padding: 2px;">
-                    <div style="font-size: 8px; color: #64748b; margin-top: 4px;">Scan QR to verify official result</div>
+                    <div style="display: inline-block; width: 84px; height: 84px; border: 1.5px solid #0f172a; padding: 2px; background: #ffffff; text-align: center; box-sizing: border-box;">
+                        <img src="{{ $qrDataUri }}" alt="Verification QR Code" style="width: 80px; height: 80px; display: block; margin: 0 auto; border: 0;">
+                    </div>
+                    <div style="font-size: 8px; font-weight: bold; color: #475569; margin-top: 3px;">Scan QR to verify official result</div>
                 </td>
                 <td style="width: 50%; text-align: right; vertical-align: bottom;">
                     <div class="signature-line" style="float: right;">
