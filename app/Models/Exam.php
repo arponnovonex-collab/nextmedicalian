@@ -33,6 +33,7 @@ class Exam extends Model
         'result_publish_at',
         'status',
         'logo_path',
+        'signature_path',
         'created_by',
     ];
 

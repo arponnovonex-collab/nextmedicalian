@@ -57,6 +57,7 @@ class ExamController extends Controller
             'marks_per_unanswered' => 'nullable|numeric|min:0',
             'pass_marks' => 'required|numeric|min:0',
             'instructions' => 'nullable|string',
+            'signature_path' => 'nullable|string',
             'registration_deadline' => 'nullable|date',
             'admit_card_publish_at' => 'nullable|date',
             'evaluation_deadline' => 'nullable|date',
@@ -126,6 +127,7 @@ class ExamController extends Controller
             'end_time' => 'required',
             'duration_minutes' => 'required|integer|min:15|max:300',
             'instructions' => 'nullable|string',
+            'signature_path' => 'nullable|string',
             'registration_deadline' => 'nullable|date',
             'admit_card_publish_at' => 'nullable|date',
             'evaluation_deadline' => 'nullable|date',
@@ -252,6 +254,49 @@ class ExamController extends Controller
         return response()->json([
             'success' => true,
             'message' => "Examination '{$exam->title}' deleted successfully",
+        ]);
+    }
+
+    public function uploadSignature(Request $request, int $id): JsonResponse
+    {
+        $exam = Exam::findOrFail($id);
+
+        $request->validate([
+            'signature' => 'required|image|mimes:jpeg,png,jpg,webp,gif|max:3072',
+        ]);
+
+        $file = $request->file('signature');
+        $dataUri = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
+
+        $exam->update(['signature_path' => $dataUri]);
+
+        $this->auditLogService->log(
+            user: $request->user(),
+            action: 'exam_signature_updated',
+            auditableType: Exam::class,
+            auditableId: $exam->id,
+            examId: $exam->id,
+            newValues: ['signature_path' => 'updated']
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Signature uploaded successfully',
+            'data' => [
+                'signature_url' => $dataUri,
+                'exam_id' => $exam->id,
+            ],
+        ]);
+    }
+
+    public function removeSignature(Request $request, int $id): JsonResponse
+    {
+        $exam = Exam::findOrFail($id);
+        $exam->update(['signature_path' => null]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Signature removed successfully',
         ]);
     }
 }

@@ -26,10 +26,48 @@ class AdmitCardService
         $verificationUrl = url("/verify/admit/{$registration->admit_card_token}");
         $qrDataUri = $this->qrService->toDataUri($verificationUrl, 100);
 
+        // Resolve signature: Exam specific first, fallback to System Setting
+        $rawSignature = $registration->exam->signature_path;
+        if (empty($rawSignature) && class_exists(\App\Models\SystemSetting::class)) {
+            $rawSignature = \App\Models\SystemSetting::where('key', 'authorized_signature_image')->value('value');
+        }
+
+        $signatureDataUri = null;
+        if (! empty($rawSignature)) {
+            if (str_starts_with($rawSignature, 'data:image')) {
+                $signatureDataUri = $rawSignature;
+            } else {
+                $cleanPath = ltrim(str_replace('/storage/', '', $rawSignature), '/');
+                $candidatePaths = [
+                    storage_path('app/public/' . $cleanPath),
+                    public_path($rawSignature),
+                    public_path('storage/' . $cleanPath),
+                    base_path($rawSignature),
+                ];
+                foreach ($candidatePaths as $cp) {
+                    if (file_exists($cp) && is_file($cp)) {
+                        $mime = mime_content_type($cp) ?: 'image/png';
+                        $signatureDataUri = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($cp));
+                        break;
+                    }
+                }
+            }
+        }
+
+        $signatureTitle = 'Controller of Examinations';
+        if (class_exists(\App\Models\SystemSetting::class)) {
+            $customTitle = \App\Models\SystemSetting::where('key', 'authorized_signature_title')->value('value');
+            if (! empty($customTitle)) {
+                $signatureTitle = $customTitle;
+            }
+        }
+
         return Pdf::loadView('pdf.admit_card', [
             'registration' => $registration,
             'qrDataUri' => $qrDataUri,
             'verificationUrl' => $verificationUrl,
+            'signatureDataUri' => $signatureDataUri,
+            'signatureTitle' => $signatureTitle,
         ])->setPaper('a4', 'portrait');
     }
 

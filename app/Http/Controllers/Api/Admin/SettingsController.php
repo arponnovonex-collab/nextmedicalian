@@ -66,4 +66,37 @@ class SettingsController extends Controller
             'data' => SystemSetting::all()->pluck('value', 'key'),
         ]);
     }
+
+    public function uploadSignature(Request $request): JsonResponse
+    {
+        $request->validate([
+            'signature' => 'required|image|mimes:jpeg,png,jpg,webp,gif|max:3072',
+        ]);
+
+        $file = $request->file('signature');
+        $dataUri = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
+
+        SystemSetting::updateOrCreate(
+            ['key' => 'authorized_signature_image'],
+            ['value' => $dataUri]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Signature uploaded successfully',
+            'data' => [
+                'signature_url' => $dataUri,
+            ],
+        ]);
+    }
+
+    public function removeSignature(): JsonResponse
+    {
+        SystemSetting::where('key', 'authorized_signature_image')->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Signature removed successfully',
+        ]);
+    }
 }

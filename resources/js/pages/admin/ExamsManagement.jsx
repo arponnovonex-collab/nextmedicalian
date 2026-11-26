@@ -13,7 +13,8 @@ import {
   Clock,
   Layers,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Upload
 } from 'lucide-react';
 
 export default function ExamsManagement() {
@@ -43,6 +44,7 @@ export default function ExamsManagement() {
     marks_per_unanswered: 0.0,
     pass_marks: 40,
     instructions: '',
+    signature_path: '',
     registration_deadline: '',
     admit_card_publish_at: '',
     status: 'draft',
@@ -98,6 +100,7 @@ export default function ExamsManagement() {
       marks_per_unanswered: 0.0,
       pass_marks: 40,
       instructions: 'Use Black Ballpoint Pen on OMR sheet. No digital watches or phones.',
+      signature_path: '',
       registration_deadline: '',
       admit_card_publish_at: '',
       status: 'draft',
@@ -122,6 +125,7 @@ export default function ExamsManagement() {
       marks_per_unanswered: exam.marks_per_unanswered || 0,
       pass_marks: exam.pass_marks,
       instructions: exam.instructions || '',
+      signature_path: exam.signature_path || '',
       registration_deadline: exam.registration_deadline ? exam.registration_deadline.slice(0, 16) : '',
       admit_card_publish_at: exam.admit_card_publish_at ? exam.admit_card_publish_at.slice(0, 16) : '',
       status: exam.status,
@@ -488,15 +492,71 @@ export default function ExamsManagement() {
 
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Instructions for Candidates
+              Instructions for Candidates (প্রবেশপত্রের নির্দেশনাবলী)
             </label>
             <textarea
-              rows={2}
+              rows={6}
               value={formData.instructions}
               onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
-              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-600"
+              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-600 font-sans"
               placeholder="Admit card and physical examination instructions..."
             />
+            <p className="text-[11px] text-slate-500 mt-1">
+              প্রবেশপত্রে এই নির্দেশনাবলী ক্রমানুসারে প্রদর্শিত হবে।
+            </p>
+          </div>
+
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Controller Signature for this Examination (স্বাক্ষর আপলোড)
+                </label>
+                <p className="text-[11px] text-slate-500">Admit Card-এ প্রদর্শনের জন্য কন্ট্রোলার বা কর্তৃপক্ষের স্বাক্ষর আপলোড করুন।</p>
+              </div>
+              {formData.signature_path && (
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, signature_path: '' })}
+                  className="text-xs font-bold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer"
+                >
+                  Remove Signature
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3">
+              {formData.signature_path ? (
+                <div className="p-2 bg-white border border-slate-200 rounded-lg shadow-2xs">
+                  <img src={formData.signature_path} alt="Signature Preview" className="h-10 max-w-[160px] object-contain" />
+                </div>
+              ) : (
+                <div className="h-10 w-32 border border-dashed border-slate-300 rounded-lg flex items-center justify-center text-[10px] text-slate-400 font-semibold bg-white">
+                  No Signature Uploaded
+                </div>
+              )}
+              <input
+                type="file"
+                id="exam-signature-upload"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = (re) => {
+                    setFormData({ ...formData, signature_path: re.target.result });
+                  };
+                  reader.readAsDataURL(file);
+                }}
+              />
+              <label
+                htmlFor="exam-signature-upload"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold cursor-pointer shadow-2xs transition-colors"
+              >
+                <Upload className="w-3.5 h-3.5" /> Upload Signature
+              </label>
+            </div>
           </div>
 
           <div className="flex items-center justify-between pt-3 border-t border-slate-100">

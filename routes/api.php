@@ -61,6 +61,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('exams', ExamController::class);
         Route::patch('/exams/{id}/status', [ExamController::class, 'updateStatus']);
         Route::post('/exams/{id}/centers', [ExamController::class, 'syncCenters']);
+        Route::post('/exams/{id}/signature', [ExamController::class, 'uploadSignature']);
+        Route::delete('/exams/{id}/signature', [ExamController::class, 'removeSignature']);
 
         // Zones & Centers & Rooms
         Route::apiResource('zones', ZoneController::class);
@@ -118,6 +120,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/audit-logs', [SettingsController::class, 'auditLogs']);
         Route::get('/settings', [SettingsController::class, 'getSettings']);
         Route::put('/settings', [SettingsController::class, 'updateSettings']);
+        Route::post('/settings/signature', [SettingsController::class, 'uploadSignature']);
+        Route::delete('/settings/signature', [SettingsController::class, 'removeSignature']);
         Route::get('/system/run-migration', function () {
             \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
             $migOutput = \Illuminate\Support\Facades\Artisan::output();
