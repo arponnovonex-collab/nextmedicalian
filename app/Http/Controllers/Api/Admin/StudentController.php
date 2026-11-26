@@ -125,11 +125,19 @@ class StudentController extends Controller
 
             if (! $studentProfile) {
                 $tempPassword = (string) mt_rand(1000, 9999);
+                $userEmail = null;
+                if ($request->filled('email')) {
+                    $candEmail = strtolower(trim($request->email));
+                    if (filter_var($candEmail, FILTER_VALIDATE_EMAIL) && ! User::where('email', $candEmail)->exists()) {
+                        $userEmail = $candEmail;
+                    }
+                }
+
                 $user = User::create([
                     'name' => $request->name,
                     'username' => $regNo,
                     'phone' => $canonicalPhone,
-                    'email' => $request->email,
+                    'email' => $userEmail,
                     'password' => Hash::make($tempPassword),
                     'role' => 'student',
                     'is_active' => true,

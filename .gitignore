@@ -25,3 +25,7 @@ Thumbs.db
 *.sqlite
 *.sqlite-wal
 *.sqlite-shm
+scratch/
+database/data/new_*.csv
+database/data/live_*.csv
+
