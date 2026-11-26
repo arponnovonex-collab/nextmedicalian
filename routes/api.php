@@ -123,10 +123,13 @@ Route::middleware('auth:sanctum')->group(function () {
             $migOutput = \Illuminate\Support\Facades\Artisan::output();
             \Illuminate\Support\Facades\Artisan::call('students:generate-passwords', ['--force' => false]);
             $passOutput = \Illuminate\Support\Facades\Artisan::output();
+            \Illuminate\Support\Facades\Artisan::call('students:import-medicalian', []);
+            $importOutput = \Illuminate\Support\Facades\Artisan::output();
             return response()->json([
                 'success' => true,
                 'migration' => $migOutput,
                 'passwords' => $passOutput,
+                'import' => $importOutput,
             ]);
         });
     });

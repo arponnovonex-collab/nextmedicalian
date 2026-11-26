@@ -193,6 +193,7 @@ class BulkStudentImportController extends Controller
                                 $userEmail = $email;
                             }
 
+                            $pin = (string) mt_rand(1000, 9999);
                             $user = User::create([
                                 'name' => $name,
                                 'username' => $regNo,
@@ -201,16 +202,16 @@ class BulkStudentImportController extends Controller
                                 'password' => $defaultPasswordHash,
                                 'role' => 'student',
                                 'is_active' => true,
-                                'must_change_password' => true,
+                                'must_change_password' => false,
                                 'created_at' => $now,
                                 'updated_at' => $now,
                             ]);
                             $newUsersCount++;
                         } else {
+                            $pin = (string) mt_rand(1000, 9999);
                             $reusedUsersCount++;
                         }
 
-                        $pin = (string) mt_rand(1000, 9999);
                         $profile = StudentProfile::create([
                             'user_id' => $user->id,
                             'registration_number' => $regNo,
