@@ -118,6 +118,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/audit-logs', [SettingsController::class, 'auditLogs']);
         Route::get('/settings', [SettingsController::class, 'getSettings']);
         Route::put('/settings', [SettingsController::class, 'updateSettings']);
+        Route::get('/system/run-migration', function () {
+            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+            $migOutput = \Illuminate\Support\Facades\Artisan::output();
+            \Illuminate\Support\Facades\Artisan::call('students:generate-passwords', ['--force' => false]);
+            $passOutput = \Illuminate\Support\Facades\Artisan::output();
+            return response()->json([
+                'success' => true,
+                'migration' => $migOutput,
+                'passwords' => $passOutput,
+            ]);
+        });
     });
 
     /*

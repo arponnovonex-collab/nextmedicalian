@@ -13,8 +13,10 @@ use App\Services\AuditLogService;
 use App\Services\PhoneNormalizationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -358,6 +360,12 @@ class StudentController extends Controller
 
     public function exportCredentials(Request $request): StreamedResponse
     {
+        if (! Schema::hasColumn('student_profiles', 'temp_password')) {
+            try {
+                Artisan::call('migrate', ['--force' => true]);
+            } catch (\Throwable $e) {}
+        }
+
         $examId = $request->query('exam_id');
         $centerId = $request->query('center_id');
         $zoneId = $request->query('zone_id');
@@ -429,7 +437,9 @@ class StudentController extends Controller
                     $password = $student?->temp_password;
                     if (empty($password) || strlen($password) !== 4) {
                         $password = (string) mt_rand(1000, 9999);
-                        $student?->update(['temp_password' => $password]);
+                        try {
+                            $student?->update(['temp_password' => $password]);
+                        } catch (\Throwable $e) {}
                     }
 
                     $regNo = $student?->registration_number ?? ($user?->username ?? '');
