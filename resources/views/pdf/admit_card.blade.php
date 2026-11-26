@@ -4,6 +4,18 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Admit Card - {{ $registration->student->registration_number }}</title>
     <style>
+        @font-face {
+            font-family: 'kalpurush';
+            font-style: normal;
+            font-weight: normal;
+            src: url('{{ storage_path('fonts/kalpurush.ttf') }}') format('truetype');
+        }
+        @font-face {
+            font-family: 'kalpurush';
+            font-style: normal;
+            font-weight: bold;
+            src: url('{{ storage_path('fonts/kalpurush.ttf') }}') format('truetype');
+        }
         @page {
             size: A4 portrait;
             margin: 12mm 15mm;
@@ -113,14 +125,14 @@
             color: #475569;
         }
         .instructions {
-            font-family: 'DejaVu Sans', sans-serif;
-            font-size: 8.5px;
+            font-family: 'kalpurush', 'DejaVu Sans', sans-serif;
+            font-size: 9px;
             color: #1e293b;
             background-color: #f8fafc;
             border: 1px solid #e2e8f0;
             padding: 7px 10px;
             margin-bottom: 12px;
-            line-height: 1.45;
+            line-height: 1.5;
         }
         .footer-table {
             width: 100%;
@@ -242,7 +254,7 @@
             }
         @endphp
 
-        <div class="section-heading" style="font-family: 'DejaVu Sans', sans-serif;">পরীক্ষার্থীদের জন্য বিশেষ নির্দেশনাবলী / Instructions for Candidates</div>
+        <div class="section-heading" style="font-family: 'kalpurush', 'DejaVu Sans', sans-serif;">পরীক্ষার্থীদের জন্য বিশেষ নির্দেশনাবলী / Instructions for Candidates</div>
         <div class="instructions">
             @foreach($lines as $line)
                 @if(!empty($line))

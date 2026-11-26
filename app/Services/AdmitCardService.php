@@ -62,13 +62,44 @@ class AdmitCardService
             }
         }
 
-        return Pdf::loadView('pdf.admit_card', [
+        $pdf = Pdf::setOptions([
+            'font_dir' => storage_path('fonts'),
+            'font_cache' => storage_path('fonts'),
+            'fontDir' => storage_path('fonts'),
+            'fontCache' => storage_path('fonts'),
+            'isRemoteEnabled' => true,
+            'enable_remote' => true,
+            'isFontSubsettingEnabled' => true,
+            'enable_font_subsetting' => true,
+            'chroot' => base_path(),
+        ])->loadView('pdf.admit_card', [
             'registration' => $registration,
             'qrDataUri' => $qrDataUri,
             'verificationUrl' => $verificationUrl,
             'signatureDataUri' => $signatureDataUri,
             'signatureTitle' => $signatureTitle,
         ])->setPaper('a4', 'portrait');
+
+        $fontPath = storage_path('fonts/kalpurush.ttf');
+        if (file_exists($fontPath)) {
+            $fontMetrics = $pdf->getDomPDF()->getFontMetrics();
+            $families = $fontMetrics->getFontFamilies();
+            $currentFontFile = $fontMetrics->getFont('kalpurush', 'normal');
+            if (! isset($families['kalpurush']) || empty($currentFontFile) || ! file_exists($currentFontFile)) {
+                $fontMetrics->registerFont([
+                    'family' => 'kalpurush',
+                    'weight' => 'normal',
+                    'style' => 'normal',
+                ], $fontPath);
+                $fontMetrics->registerFont([
+                    'family' => 'kalpurush',
+                    'weight' => 'bold',
+                    'style' => 'normal',
+                ], $fontPath);
+            }
+        }
+
+        return $pdf;
     }
 
     public function generateResultPdf(ExamRegistration $registration, ResultSnapshot $result): \Barryvdh\DomPDF\PDF
